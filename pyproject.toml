@@ -4,8 +4,13 @@ version = "0.1.0"
 description = ""
 authors = ["Ivan Kosternoi <ivan.kosternoy@gmail.com>"]
 
+[tool.poetry.scripts]
+profile_data = "rsschool_mlintro2022q1_capstone_project.data_profiling:profile_data"
+
 [tool.poetry.dependencies]
 python = "^3.9"
+pandas = "1.3.5"
+pandas-profiling = "^3.2.0"
 
 [tool.poetry.dev-dependencies]
 
