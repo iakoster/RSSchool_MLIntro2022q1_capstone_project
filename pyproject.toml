@@ -11,6 +11,7 @@ profile_data = "rsschool_mlintro2022q1_capstone_project.data_profiling:profile_d
 python = "^3.9"
 pandas = "1.3.5"
 pandas-profiling = "^3.2.0"
+click = "^8.1.3"
 
 [tool.poetry.dev-dependencies]
 
