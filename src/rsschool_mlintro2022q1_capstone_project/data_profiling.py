@@ -5,6 +5,7 @@ import pandas as pd
 import pandas_profiling  # If you do not import this,
 # that .profile_report method of pandas dataframe does not work
 
+
 @click.command()
 @click.option(
     "-d",
