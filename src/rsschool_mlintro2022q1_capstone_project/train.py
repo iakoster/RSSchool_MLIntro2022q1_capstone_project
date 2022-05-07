@@ -9,8 +9,9 @@ from sklearn.metrics import accuracy_score
 from .models import create_pipeline
 
 
-def get_dataset_xy(dataset_path: Path
-                   ) -> tuple[pd.DataFrame, pd.Series]:
+def get_dataset(
+        dataset_path: Path
+) -> pd.DataFrame:
     if dataset_path.suffix != '.csv':
         raise TypeError(
             'Data profiling does not support '
@@ -18,6 +19,12 @@ def get_dataset_xy(dataset_path: Path
     df = pd.read_csv(dataset_path)
     df.columns = df.columns.str.lower()
     df.set_index('id', inplace=True)
+    return df
+
+
+def get_dataset_xy(dataset_path: Path
+                   ) -> tuple[pd.DataFrame, pd.Series]:
+    df = get_dataset(dataset_path)
     return df.drop(columns='cover_type'), df['cover_type']
 
 
@@ -33,7 +40,7 @@ def get_dataset_xy(dataset_path: Path
     "-m",
     "--model",
     default="knn",
-    type=str,
+    type=click.Choice(['knn'], case_sensitive=False),
     show_default=True,
 )
 @click.option(
@@ -55,21 +62,20 @@ def get_dataset_xy(dataset_path: Path
     show_default=True,
 )
 def train(
-        dataset_path: Path = None,
+        dataset_path: Path = Path("data/train.csv"),
         model: str = 'knn',
         random_state: int = 42,
         test_split_ratio: float = 0.2,
         knn_neighbors: int = 5,
 ):
-    if dataset_path is None:
-        dataset_path = Path(r'data\train.csv')
     X_train, X_test, y_train, y_test = train_test_split(
         *get_dataset_xy(dataset_path),
         test_size=test_split_ratio,
-        random_state=random_state)
+        random_state=random_state
+    )
     model = create_pipeline(
         model=model,
-        random_state=42,
+        random_state=random_state,
         knn_neighbors=knn_neighbors,
     )
     model.fit(X_train, y_train)
