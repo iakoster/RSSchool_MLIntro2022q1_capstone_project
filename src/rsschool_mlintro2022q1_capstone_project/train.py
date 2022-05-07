@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-from .models import create_pipeline
+from .models import create_pipeline, get_metrics
 from .settings import DATASET_PATH_TRAIN, STD_MODEL_PATH
 
 
@@ -89,6 +89,11 @@ def train(
         knn_neighbors=knn_neighbors,
     )
     pipeline.fit(X_train, y_train)
-    accuracy = accuracy_score(y_test, pipeline.predict(X_test))
-    click.echo(f'Accuracy: {accuracy}')
+    accuracy, f1, precision = get_metrics(
+        y_test, pipeline.predict(X_test))
+    click.echo(
+        f'Accuracy: {accuracy}, '
+        f'F1 score: {f1}, '
+        f'Precision: {precision}'
+    )
     dump(pipeline, save_model_path)
