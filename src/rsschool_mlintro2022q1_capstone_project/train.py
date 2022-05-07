@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 from .models import create_pipeline
+from .settings import DATASET_PATH_TRAIN, STD_MODEL_PATH
 
 
 def get_dataset(
@@ -33,14 +34,14 @@ def get_dataset_xy(dataset_path: Path
 @click.option(
     "-d",
     "--dataset-path",
-    default="data/train.csv",
+    default=DATASET_PATH_TRAIN,
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     show_default=True,
 )
 @click.option(
     "-s",
     "--save-model-path",
-    default="data/model.joblib",
+    default=STD_MODEL_PATH,
     type=click.Path(dir_okay=False, writable=True, path_type=Path),
     show_default=True,
 )

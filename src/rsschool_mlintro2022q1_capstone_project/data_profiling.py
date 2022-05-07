@@ -2,8 +2,7 @@ from pathlib import Path
 
 import click
 import pandas as pd
-import pandas_profiling  # If you do not import this,
-# that .profile_report method of pandas dataframe does not work
+import pandas_profiling
 
 
 @click.command()
@@ -34,6 +33,6 @@ def profile_data(
 
     profile_name = f'profile_{dataset_path.stem}_' \
                    f'{dataset_path.suffix[1:]}'
-    pd.read_csv(dataset_path)\
-        .profile_report(title=profile_name)\
-        .to_file(output_dir / f'{profile_name}.html')
+    pandas_profiling.ProfileReport(
+        pd.read_csv(dataset_path)
+    ).to_file(output_dir / f'{profile_name}.html')
