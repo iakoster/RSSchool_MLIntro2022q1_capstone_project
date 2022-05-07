@@ -1,4 +1,5 @@
 from pathlib import Path
+from joblib import dump
 
 import click
 import pandas as pd
@@ -37,6 +38,13 @@ def get_dataset_xy(dataset_path: Path
     show_default=True,
 )
 @click.option(
+    "-s",
+    "--save-model-path",
+    default="data/model.joblib",
+    type=click.Path(dir_okay=False, writable=True, path_type=Path),
+    show_default=True,
+)
+@click.option(
     "-m",
     "--model",
     default="knn",
@@ -62,21 +70,24 @@ def get_dataset_xy(dataset_path: Path
     show_default=True,
 )
 def train(
-        dataset_path: Path = Path("data/train.csv"),
-        model: str = 'knn',
-        random_state: int = 42,
-        test_split_ratio: float = 0.2,
-        knn_neighbors: int = 5,
+        dataset_path: Path,
+        save_model_path: Path,
+        model: str,
+        random_state: int,
+        test_split_ratio: float,
+        knn_neighbors: int,
 ):
     X_train, X_test, y_train, y_test = train_test_split(
         *get_dataset_xy(dataset_path),
         test_size=test_split_ratio,
         random_state=random_state
     )
-    model = create_pipeline(
+    pipeline = create_pipeline(
         model=model,
         random_state=random_state,
         knn_neighbors=knn_neighbors,
     )
-    model.fit(X_train, y_train)
-    print(accuracy_score(y_test, model.predict(X_test)))
+    pipeline.fit(X_train, y_train)
+    accuracy = accuracy_score(y_test, pipeline.predict(X_test))
+    click.echo(f'Accuracy: {accuracy}')
+    dump(pipeline, save_model_path)
