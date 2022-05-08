@@ -1,5 +1,6 @@
 from pathlib import Path
 from joblib import dump
+from typing import Any
 
 import click
 import numpy as np
@@ -30,6 +31,14 @@ def get_dataset_xy(
 ) -> tuple[pd.DataFrame, pd.Series]:
     df = get_dataset(dataset_path)
     return df.drop(columns='cover_type'), df['cover_type']
+
+
+def format_kwargs(*params: tuple[str, str, str]
+                  ) -> dict[str, Any]:
+    params_kw = {}
+    for name, type_, value in params:
+        params_kw[name.replace('-', '_')] = eval(type_)(value)
+    return params_kw
 
 
 @click.command()
@@ -73,28 +82,10 @@ def get_dataset_xy(
     show_default=True,
 )
 @click.option(
-    "--knn-neighbors",
-    default=5,
-    type=click.IntRange(0, min_open=True),
-    show_default=True,
-)
-@click.option(
-    "--forest-n-estimators",
-    default=100,
-    type=click.IntRange(0, min_open=True),
-    show_default=True,
-)
-@click.option(
-    "--forest-criterion",
-    default='gini',
-    type=click.Choice(
-        ['gini', 'entropy'], case_sensitive=False),
-    show_default=True,
-)
-@click.option(
-    "--forest-max-depth",
-    default=50,
-    type=click.IntRange(0, min_open=True),
+    "--model-kw",
+    nargs=3,
+    type=click.Tuple([str, str, str]),
+    multiple=True,
     show_default=True,
 )
 def train(
@@ -104,20 +95,27 @@ def train(
         random_state: int,
         k_folds: int,
         shuffle_folds: bool,
-        knn_neighbors: int,
-        forest_n_estimators: int,
-        forest_criterion: str,
-        forest_max_depth: int
+        model_kw: tuple[str, str, str]
 ):
     X, y = get_dataset_xy(dataset_path)
-    pipeline = create_pipeline(
-        model=model,
-        random_state=random_state,
-        knn_neighbors=knn_neighbors,
-        forest_n_estimators=forest_n_estimators,
-        forest_criterion=forest_criterion,
-        forest_max_depth=forest_max_depth
-    )
+    try:
+        model_kw = format_kwargs(*model_kw)
+    except Exception as exc:
+        raise click.BadParameter(
+            f'Raised exception while '
+            f'format model kwarg: {repr(exc)}'
+        )
+    try:
+        pipeline = create_pipeline(
+            model=model,
+            random_state=random_state,
+            model_kw=model_kw
+        )
+    except Exception as exc:
+        raise click.BadParameter(
+            f'Raised exception while '
+            f'setting pipeline: {repr(exc)}'
+        )
     kf = KFold(
         n_splits=k_folds,
         shuffle=shuffle_folds,

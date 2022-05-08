@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union
+from typing import Union, Any
 
 import numpy as np
 import pandas as pd
@@ -23,24 +23,17 @@ def get_metrics(
 def create_pipeline(
         model: str = 'knn',
         random_state: int = 42,
-        knn_neighbors: int = 5,
-        forest_n_estimators: int = 100,
-        forest_criterion: str = 'gini',
-        forest_max_depth: int = None
+        model_kw: dict[str, Any] = None,
 ) -> Pipeline:
+    if model_kw is None:
+        model_kw = {}
 
     pipeline_steps = []
     if model == 'knn':
         pipeline_steps.append((
-            'knn', KNeighborsClassifier(
-                n_neighbors=knn_neighbors
-            )))
+            'knn', KNeighborsClassifier(**model_kw)))
     elif model == 'forest':
         pipeline_steps.append((
             'forest', RandomForestClassifier(
-                n_estimators=forest_n_estimators,
-                criterion=forest_criterion,
-                max_depth=forest_max_depth,
-                random_state=random_state
-            )))
+                random_state=random_state, **model_kw)))
     return Pipeline(steps=pipeline_steps)
