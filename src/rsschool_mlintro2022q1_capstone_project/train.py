@@ -92,6 +92,17 @@ def format_kwargs(*params: tuple[str, str, str]
     multiple=True,
     show_default=True,
 )
+@click.option(
+    "--save-cfg",
+    is_flag=True,
+    show_default=True,
+)
+@click.option(
+    "--cfg-path",
+    default=STD_CFG_PATH,
+    type=click.Path(dir_okay=False, writable=True, path_type=Path),
+    show_default=True,
+)
 def train(
         dataset_path: Path,
         save_model_path: Path,
@@ -99,11 +110,13 @@ def train(
         random_state: int,
         k_folds: int,
         shuffle_folds: bool,
-        model_kw: tuple[str, str, str]
+        model_kw: tuple[str, str, str],
+        save_cfg: bool,
+        cfg_path: Path,
 ):
     X, y = get_dataset_xy(dataset_path)
     try:
-        model_kw = format_kwargs(*model_kw)
+        model_kw_fmt = format_kwargs(*model_kw)
     except Exception as exc:
         raise click.BadParameter(
             f'Raised exception while '
@@ -113,7 +126,7 @@ def train(
         pipeline = create_pipeline(
             model=model,
             random_state=random_state,
-            model_kw=model_kw
+            model_kw=model_kw_fmt
         )
     except Exception as exc:
         raise click.BadParameter(
@@ -156,6 +169,14 @@ def train(
     )
     click.echo(f'Best model saved in {save_model_path}')
 
+    if save_cfg:
+        save_params_to_cfg(
+            dataset_path, save_model_path, model,
+            random_state, k_folds, shuffle_folds,
+            model_kw, cfg_path,
+        )
+        click.echo(f'Train parameters saved in {cfg_path}')
+
 
 @click.command()
 @click.option(
@@ -192,3 +213,31 @@ def train_by_cfg(ctx: click.Context, cfg_path: Path):
             f'values from config: {repr(exc)}'
         )
     ctx.invoke(train, **kwargs)
+
+
+def save_params_to_cfg(
+        dataset_path: Path,
+        save_model_path: Path,
+        model: str,
+        random_state: int,
+        k_folds: int,
+        shuffle_folds: bool,
+        model_kw: tuple[str, str, str],
+        cfg_path: Path,
+):
+    cfg = configparser.ConfigParser()
+    cfg.add_section('general')
+    cfg['general']['dataset_path'] = str(dataset_path)
+    cfg['general']['save_model_path'] = str(save_model_path)
+    cfg['general']['model'] = str(model)
+    cfg['general']['random_state'] = str(random_state)
+    cfg['general']['k_folds'] = str(k_folds)
+    cfg['general']['shuffle_folds'] = str(shuffle_folds)
+
+    if len(model_kw) != 0:
+        cfg.add_section('model_kw')
+        for name, type_, val in model_kw:
+            cfg['model_kw'][name] = f'{type_} {val}'
+
+    with open(cfg_path, 'w') as file:
+        cfg.write(file)
