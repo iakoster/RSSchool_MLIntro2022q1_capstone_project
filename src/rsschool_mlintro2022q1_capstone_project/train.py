@@ -267,7 +267,6 @@ def train_by_cfg(ctx: click.Context, cfg_path: Path):
             f'Raised exception while converting '
             f'values from config: {repr(exc)}'
         )
-    print(kwargs)
     ctx.invoke(train, **kwargs)
 
 
