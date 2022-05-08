@@ -87,6 +87,11 @@ def format_kwargs(*params: tuple[str, str, str]
     show_default=True,
 )
 @click.option(
+    "--parallel",
+    is_flag=True,
+    show_default=True,
+)
+@click.option(
     "--model-kw",
     nargs=3,
     type=click.Tuple([str, str, str]),
@@ -111,11 +116,13 @@ def train(
         random_state: int,
         k_folds: int,
         shuffle_folds: bool,
+        parallel: bool,
         model_kw: tuple[str, str, str],
         save_cfg: bool,
         cfg_path: Path,
 ):
     features, target = get_dataset_xy(dataset_path)
+    n_jobs = -1 if parallel else None
 
     with mlflow.start_run():
         try:
@@ -129,6 +136,7 @@ def train(
             pipeline = create_pipeline(
                 model=model,
                 random_state=random_state,
+                n_jobs=n_jobs,
                 model_kw=model_kw_fmt
             )
         except Exception as exc:
@@ -241,6 +249,7 @@ def save_params_to_cfg(
         random_state: int,
         k_folds: int,
         shuffle_folds: bool,
+        parallel: bool,
         model_kw: tuple[str, str, str],
         cfg_path: Path,
 ):
@@ -252,6 +261,7 @@ def save_params_to_cfg(
     cfg['general']['random_state'] = str(random_state)
     cfg['general']['k_folds'] = str(k_folds)
     cfg['general']['shuffle_folds'] = str(shuffle_folds)
+    cfg['general']['parallel'] = str(parallel)
 
     if len(model_kw) != 0:
         cfg.add_section('model_kw')

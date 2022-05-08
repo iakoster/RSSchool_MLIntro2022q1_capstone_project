@@ -23,6 +23,7 @@ def get_metrics(
 def create_pipeline(
         model: str = 'knn',
         random_state: int = 42,
+        n_jobs: int = None,
         model_kw: dict[str, Any] = None,
 ) -> Pipeline:
     if model_kw is None:
@@ -31,9 +32,11 @@ def create_pipeline(
     pipeline_steps = []
     if model == 'knn':
         pipeline_steps.append((
-            'knn', KNeighborsClassifier(**model_kw)))
+            'knn', KNeighborsClassifier(
+                n_jobs=n_jobs, **model_kw)))
     elif model == 'forest':
         pipeline_steps.append((
             'forest', RandomForestClassifier(
-                random_state=random_state, **model_kw)))
+                random_state=random_state, n_jobs=n_jobs,
+                **model_kw)))
     return Pipeline(steps=pipeline_steps)
