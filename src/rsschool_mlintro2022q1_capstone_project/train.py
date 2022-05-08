@@ -2,7 +2,7 @@ import configparser
 import warnings
 from pathlib import Path
 from joblib import dump
-from typing import Any, Optional
+from typing import Any
 
 import click
 import numpy as np
@@ -108,6 +108,12 @@ def format_kwargs(*params: tuple[str, str, str]
     show_default=True,
 )
 @click.option(
+    "--scaler",
+    default="standard",
+    type=click.Choice(['standard', 'minmax'], case_sensitive=False),
+    show_default=True,
+)
+@click.option(
     "--save-cfg",
     is_flag=True,
     show_default=True,
@@ -128,6 +134,7 @@ def train(
         model: str,
         model_kw: tuple[str, str, str],
         scale: bool,
+        scaler: str,
         save_cfg: bool,
         cfg_path: Path,
 ):
@@ -147,6 +154,7 @@ def train(
                 model=model,
                 random_state=random_state,
                 scale=scale,
+                scaler=scaler,
                 n_jobs=n_jobs,
                 model_kw=model_kw_fmt
             )
@@ -187,7 +195,7 @@ def train(
         mlflow.log_params({
             'model': model, 'random_state': random_state,
             'k_folds': k_folds, 'shuffle_folds': shuffle_folds,
-            'use_scaler': scale
+            'use_scaler': scale, 'scaler': scaler
         })
         mlflow.log_param(
             'model_params', 'std' if len(model_kw) == 0 else
@@ -212,7 +220,7 @@ def train(
         save_params_to_cfg(
             dataset_path, save_model_path,
             random_state, k_folds, shuffle_folds,
-            parallel, scale, model, model_kw,
+            parallel, scale, scaler, model, model_kw,
             cfg_path,
         )
         click.echo(f'Train parameters saved in {cfg_path}')
@@ -263,6 +271,7 @@ def save_params_to_cfg(
         shuffle_folds: bool,
         parallel: bool,
         scale: bool,
+        scaler: str,
         model: str,
         model_kw: tuple[str, str, str],
         cfg_path: Path,
@@ -276,7 +285,8 @@ def save_params_to_cfg(
     cfg['general']['shuffle_folds'] = str(shuffle_folds)
     cfg['general']['parallel'] = str(parallel)
     cfg['general']['scale'] = str(scale)
-    cfg['general']['model'] = str(model)
+    cfg['general']['scaler'] = scaler
+    cfg['general']['model'] = model
 
     if len(model_kw) != 0:
         cfg.add_section('model_kw')

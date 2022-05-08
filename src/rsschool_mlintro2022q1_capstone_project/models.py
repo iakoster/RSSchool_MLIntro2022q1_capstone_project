@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.feature_selection import SelectKBest
 from sklearn.metrics import accuracy_score, f1_score, precision_score
 
@@ -14,7 +14,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score
 def get_metrics(
         y_true: Union[pd.Series, np.ndarray],
         y_pred: Union[pd.Series, np.ndarray]
-):
+) -> tuple[float, float, float]:
     return (
         accuracy_score(y_true, y_pred),
         f1_score(y_true, y_pred, average='macro'),
@@ -25,6 +25,7 @@ def get_metrics(
 def create_pipeline(
         model: str = 'knn',
         scale: bool = True,
+        scaler: str = 'standard',
         random_state: int = 42,
         n_jobs: int = None,
         model_kw: dict[str, Any] = None,
@@ -33,9 +34,13 @@ def create_pipeline(
         model_kw = {}
     pipeline_steps = []
 
-    if scale:
+    if scale and scaler == 'standard':
         pipeline_steps.append((
             'scaler', StandardScaler()
+        ))
+    elif scale and scaler == 'minmax':
+        pipeline_steps.append((
+            'scaler', MinMaxScaler()
         ))
 
     if model == 'knn':
