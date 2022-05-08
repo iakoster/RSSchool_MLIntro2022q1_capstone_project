@@ -7,8 +7,9 @@ import click
 import numpy as np
 import pandas as pd
 
-from sklearn.model_selection import train_test_split, KFold
-from sklearn.metrics import accuracy_score
+import mlflow
+import mlflow.sklearn
+from sklearn.model_selection import KFold
 
 from .models import create_pipeline, get_metrics
 from .settings import (
@@ -114,60 +115,78 @@ def train(
         save_cfg: bool,
         cfg_path: Path,
 ):
-    X, y = get_dataset_xy(dataset_path)
-    try:
-        model_kw_fmt = format_kwargs(*model_kw)
-    except Exception as exc:
-        raise click.BadParameter(
-            f'Raised exception while '
-            f'format model kwarg: {repr(exc)}'
-        )
-    try:
-        pipeline = create_pipeline(
-            model=model,
-            random_state=random_state,
-            model_kw=model_kw_fmt
-        )
-    except Exception as exc:
-        raise click.BadParameter(
-            f'Raised exception while '
-            f'setting pipeline: {repr(exc)}'
-        )
-    kf = KFold(
-        n_splits=k_folds,
-        shuffle=shuffle_folds,
-        random_state=random_state if shuffle_folds else None
-    )
+    features, target = get_dataset_xy(dataset_path)
 
-    accuracy_folds, f1_folds, precision_folds = [], [], []
-    accuracy_best, f1_best, precision_best = 0, 0, 0
-    for train_index, test_index in kf.split(X):
-        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
-        pipeline.fit(X_train, y_train)
-        accuracy, f1, precision = get_metrics(
-            y_test, pipeline.predict(X_test))
-        accuracy_folds.append(accuracy)
-        f1_folds.append(f1)
-        precision_folds.append(precision)
-        if accuracy > accuracy_best:
-            accuracy_best, f1_best, precision_best = \
-                accuracy, f1, precision
-            dump(pipeline, save_model_path)
+    with mlflow.start_run():
+        try:
+            model_kw_fmt = format_kwargs(*model_kw)
+        except Exception as exc:
+            raise click.BadParameter(
+                f'Raised exception while '
+                f'format model kwarg: {repr(exc)}'
+            )
+        try:
+            pipeline = create_pipeline(
+                model=model,
+                random_state=random_state,
+                model_kw=model_kw_fmt
+            )
+        except Exception as exc:
+            raise click.BadParameter(
+                f'Raised exception while '
+                f'setting pipeline: {repr(exc)}'
+            )
 
-    click.echo(
-        f'Mean metrics. '
-        f'Accuracy: {np.mean(accuracy_folds):.6f}, '
-        f'F1 score: {np.mean(f1_folds):.6f}, '
-        f'Precision: {np.mean(precision_folds):.6f}'
-    )
-    click.echo(
-        f'Best metrics. '
-        f'Accuracy: {accuracy_best:.6f}, '
-        f'F1 score: {f1_best:.6f}, '
-        f'Precision: {precision_best:.6f}'
-    )
-    click.echo(f'Best model saved in {save_model_path}')
+        kf = KFold(
+            n_splits=k_folds,
+            shuffle=shuffle_folds,
+            random_state=random_state if shuffle_folds else None
+        )
+
+        accuracy_folds, f1_folds, precision_folds = [], [], []
+        accuracy_best, f1_best, precision_best = 0, 0, 0
+        for train_index, test_index in kf.split(features):
+            x_train, x_test = features.iloc[train_index], features.iloc[test_index]
+            y_train, y_test = target.iloc[train_index], target.iloc[test_index]
+            pipeline.fit(x_train, y_train)
+            accuracy, f1, precision = get_metrics(
+                y_test, pipeline.predict(x_test))
+            accuracy_folds.append(accuracy)
+            f1_folds.append(f1)
+            precision_folds.append(precision)
+            if accuracy > accuracy_best:
+                accuracy_best, f1_best, precision_best = \
+                    accuracy, f1, precision
+                dump(pipeline, save_model_path)
+
+        mlflow.log_metrics(
+            {'accuracy': float(np.mean(accuracy_folds)),
+             'f1_score': float(np.mean(f1_folds)),
+             'precision': float(np.mean(precision_folds))}
+        )
+        mlflow.sklearn.log_model(pipeline, model)
+        mlflow.log_params(
+            {'model': model, 'random_state': random_state,
+             'k_folds': k_folds, 'shuffle_folds': shuffle_folds}
+        )
+        mlflow.log_param(
+            'model_params', 'std' if len(model_kw) == 0 else
+            ', '.join(f'{k}={v}' for k, v in model_kw_fmt.items())
+        )
+
+        click.echo(
+            f'Mean metrics. '
+            f'Accuracy: {np.mean(accuracy_folds):.6f}, '
+            f'F1 score: {np.mean(f1_folds):.6f}, '
+            f'Precision: {np.mean(precision_folds):.6f}'
+        )
+        click.echo(
+            f'Best metrics. '
+            f'Accuracy: {accuracy_best:.6f}, '
+            f'F1 score: {f1_best:.6f}, '
+            f'Precision: {precision_best:.6f}'
+        )
+        click.echo(f'Best model saved in {save_model_path}')
 
     if save_cfg:
         save_params_to_cfg(
