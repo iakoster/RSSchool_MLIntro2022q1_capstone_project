@@ -51,7 +51,7 @@ def get_dataset_xy(
     "-m",
     "--model",
     default="knn",
-    type=click.Choice(['knn'], case_sensitive=False),
+    type=click.Choice(['knn', 'forest'], case_sensitive=False),
     show_default=True,
 )
 @click.option(
@@ -67,7 +67,7 @@ def get_dataset_xy(
     show_default=True,
 )
 @click.option(
-    "--shuffle-folds",
+    "--shuffle-folds/--no-shuffle-folds",
     default=False,
     type=bool,
     show_default=True,
@@ -75,6 +75,25 @@ def get_dataset_xy(
 @click.option(
     "--knn-neighbors",
     default=5,
+    type=click.IntRange(0, min_open=True),
+    show_default=True,
+)
+@click.option(
+    "--forest-n-estimators",
+    default=100,
+    type=click.IntRange(0, min_open=True),
+    show_default=True,
+)
+@click.option(
+    "--forest-criterion",
+    default='gini',
+    type=click.Choice(
+        ['gini', 'entropy'], case_sensitive=False),
+    show_default=True,
+)
+@click.option(
+    "--forest-max-depth",
+    default=50,
     type=click.IntRange(0, min_open=True),
     show_default=True,
 )
@@ -86,17 +105,24 @@ def train(
         k_folds: int,
         shuffle_folds: bool,
         knn_neighbors: int,
+        forest_n_estimators: int,
+        forest_criterion: str,
+        forest_max_depth: int
 ):
     X, y = get_dataset_xy(dataset_path)
     pipeline = create_pipeline(
         model=model,
         random_state=random_state,
         knn_neighbors=knn_neighbors,
+        forest_n_estimators=forest_n_estimators,
+        forest_criterion=forest_criterion,
+        forest_max_depth=forest_max_depth
     )
-    kf = KFold(n_splits=k_folds,
-               shuffle=shuffle_folds,
-               random_state=random_state
-               if shuffle_folds else None)
+    kf = KFold(
+        n_splits=k_folds,
+        shuffle=shuffle_folds,
+        random_state=random_state if shuffle_folds else None
+    )
 
     accuracy_folds, f1_folds, precision_folds = [], [], []
     accuracy_best, f1_best, precision_best = 0, 0, 0
