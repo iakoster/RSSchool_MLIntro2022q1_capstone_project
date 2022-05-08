@@ -253,8 +253,8 @@ def train_by_cfg(ctx: click.Context, cfg_path: Path):
                     kwargs[opt] = Path(val)
                 elif opt in ('random_state', 'k_folds', 'k_best'):
                     kwargs[opt] = int(val)
-                elif opt in ('scale',):
-                    kwargs[opt] = bool(val)
+                elif opt in ('scale', 'normalize', 'parallel'):
+                    kwargs[opt] = eval(val)
                 else:
                     kwargs[opt] = val
         if 'model_kw' in cfg:
@@ -267,6 +267,7 @@ def train_by_cfg(ctx: click.Context, cfg_path: Path):
             f'Raised exception while converting '
             f'values from config: {repr(exc)}'
         )
+    print(kwargs)
     ctx.invoke(train, **kwargs)
 
 
