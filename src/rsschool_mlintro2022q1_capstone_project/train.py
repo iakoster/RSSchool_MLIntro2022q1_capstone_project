@@ -1,7 +1,8 @@
 import configparser
+import warnings
 from pathlib import Path
 from joblib import dump
-from typing import Any
+from typing import Any, Optional
 
 import click
 import numpy as np
@@ -17,6 +18,9 @@ from .settings import (
     STD_MODEL_PATH,
     STD_CFG_PATH
 )
+
+
+warnings.simplefilter("ignore")
 
 
 def get_dataset(
@@ -63,13 +67,6 @@ def format_kwargs(*params: tuple[str, str, str]
     show_default=True,
 )
 @click.option(
-    "-m",
-    "--model",
-    default="knn",
-    type=click.Choice(['knn', 'forest'], case_sensitive=False),
-    show_default=True,
-)
-@click.option(
     "--random-state",
     default=42,
     type=int,
@@ -92,10 +89,22 @@ def format_kwargs(*params: tuple[str, str, str]
     show_default=True,
 )
 @click.option(
+    "-m",
+    "--model",
+    default="knn",
+    type=click.Choice(['knn', 'forest'], case_sensitive=False),
+    show_default=True,
+)
+@click.option(
     "--model-kw",
     nargs=3,
     type=click.Tuple([str, str, str]),
     multiple=True,
+    show_default=True,
+)
+@click.option(
+    "--scale",
+    is_flag=True,
     show_default=True,
 )
 @click.option(
@@ -112,12 +121,13 @@ def format_kwargs(*params: tuple[str, str, str]
 def train(
         dataset_path: Path,
         save_model_path: Path,
-        model: str,
         random_state: int,
         k_folds: int,
         shuffle_folds: bool,
         parallel: bool,
+        model: str,
         model_kw: tuple[str, str, str],
+        scale: bool,
         save_cfg: bool,
         cfg_path: Path,
 ):
@@ -136,6 +146,7 @@ def train(
             pipeline = create_pipeline(
                 model=model,
                 random_state=random_state,
+                scale=scale,
                 n_jobs=n_jobs,
                 model_kw=model_kw_fmt
             )
@@ -173,10 +184,11 @@ def train(
              'precision': float(np.mean(precision_folds))}
         )
         mlflow.sklearn.log_model(pipeline, model)
-        mlflow.log_params(
-            {'model': model, 'random_state': random_state,
-             'k_folds': k_folds, 'shuffle_folds': shuffle_folds}
-        )
+        mlflow.log_params({
+            'model': model, 'random_state': random_state,
+            'k_folds': k_folds, 'shuffle_folds': shuffle_folds,
+            'use_scaler': scale
+        })
         mlflow.log_param(
             'model_params', 'std' if len(model_kw) == 0 else
             ', '.join(f'{k}={v}' for k, v in model_kw_fmt.items())
@@ -198,9 +210,10 @@ def train(
 
     if save_cfg:
         save_params_to_cfg(
-            dataset_path, save_model_path, model,
+            dataset_path, save_model_path,
             random_state, k_folds, shuffle_folds,
-            model_kw, cfg_path,
+            parallel, scale, model, model_kw,
+            cfg_path,
         )
         click.echo(f'Train parameters saved in {cfg_path}')
 
@@ -225,7 +238,7 @@ def train_by_cfg(ctx: click.Context, cfg_path: Path):
                     kwargs[opt] = Path(val)
                 elif opt in ('random_state', 'k_folds'):
                     kwargs[opt] = int(val)
-                elif opt in ('shuffle_folds',):
+                elif opt in ('shuffle_folds', 'scale'):
                     kwargs[opt] = bool(val)
                 else:
                     kwargs[opt] = val
@@ -245,11 +258,12 @@ def train_by_cfg(ctx: click.Context, cfg_path: Path):
 def save_params_to_cfg(
         dataset_path: Path,
         save_model_path: Path,
-        model: str,
         random_state: int,
         k_folds: int,
         shuffle_folds: bool,
         parallel: bool,
+        scale: bool,
+        model: str,
         model_kw: tuple[str, str, str],
         cfg_path: Path,
 ):
@@ -257,11 +271,12 @@ def save_params_to_cfg(
     cfg.add_section('general')
     cfg['general']['dataset_path'] = str(dataset_path)
     cfg['general']['save_model_path'] = str(save_model_path)
-    cfg['general']['model'] = str(model)
     cfg['general']['random_state'] = str(random_state)
     cfg['general']['k_folds'] = str(k_folds)
     cfg['general']['shuffle_folds'] = str(shuffle_folds)
     cfg['general']['parallel'] = str(parallel)
+    cfg['general']['scale'] = str(scale)
+    cfg['general']['model'] = str(model)
 
     if len(model_kw) != 0:
         cfg.add_section('model_kw')

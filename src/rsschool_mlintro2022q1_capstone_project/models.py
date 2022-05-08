@@ -6,6 +6,8 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectKBest
 from sklearn.metrics import accuracy_score, f1_score, precision_score
 
 
@@ -22,14 +24,20 @@ def get_metrics(
 
 def create_pipeline(
         model: str = 'knn',
+        scale: bool = True,
         random_state: int = 42,
         n_jobs: int = None,
         model_kw: dict[str, Any] = None,
 ) -> Pipeline:
     if model_kw is None:
         model_kw = {}
-
     pipeline_steps = []
+
+    if scale:
+        pipeline_steps.append((
+            'scaler', StandardScaler()
+        ))
+
     if model == 'knn':
         pipeline_steps.append((
             'knn', KNeighborsClassifier(
