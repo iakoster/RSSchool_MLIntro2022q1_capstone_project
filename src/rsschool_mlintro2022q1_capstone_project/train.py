@@ -1,3 +1,4 @@
+import configparser
 from pathlib import Path
 from joblib import dump
 from typing import Any
@@ -10,7 +11,11 @@ from sklearn.model_selection import train_test_split, KFold
 from sklearn.metrics import accuracy_score
 
 from .models import create_pipeline, get_metrics
-from .settings import DATASET_PATH_TRAIN, STD_MODEL_PATH
+from .settings import (
+    DATASET_PATH_TRAIN,
+    STD_MODEL_PATH,
+    STD_CFG_PATH
+)
 
 
 def get_dataset(
@@ -76,9 +81,8 @@ def format_kwargs(*params: tuple[str, str, str]
     show_default=True,
 )
 @click.option(
-    "--shuffle-folds/--no-shuffle-folds",
-    default=False,
-    type=bool,
+    "--shuffle-folds",
+    is_flag=True,
     show_default=True,
 )
 @click.option(
@@ -137,6 +141,7 @@ def train(
             accuracy_best, f1_best, precision_best = \
                 accuracy, f1, precision
             dump(pipeline, save_model_path)
+
     click.echo(
         f'Mean metrics. '
         f'Accuracy: {np.mean(accuracy_folds):.6f}, '
@@ -151,3 +156,39 @@ def train(
     )
     click.echo(f'Best model saved in {save_model_path}')
 
+
+@click.command()
+@click.option(
+    "-c",
+    "--cfg-path",
+    default=STD_CFG_PATH,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    show_default=True,
+)
+@click.pass_context
+def train_by_cfg(ctx: click.Context, cfg_path: Path):
+    cfg = configparser.ConfigParser()
+    cfg.read(cfg_path)
+    kwargs = {}
+    try:
+        if 'general' in cfg:
+            for opt, val in cfg['general'].items():
+                if opt in ('dataset_path', 'save_model_path'):
+                    kwargs[opt] = Path(val)
+                elif opt in ('random_state', 'k_folds'):
+                    kwargs[opt] = int(val)
+                elif opt in ('shuffle_folds',):
+                    kwargs[opt] = bool(val)
+                else:
+                    kwargs[opt] = val
+        if 'model_kw' in cfg:
+            kwargs['model_kw'] = tuple(
+                (k, *v.split()) for k, v in
+                cfg['model_kw'].items()
+            )
+    except Exception as exc:
+        raise click.BadParameter(
+            f'Raised exception while converting '
+            f'values from config: {repr(exc)}'
+        )
+    ctx.invoke(train, **kwargs)

@@ -7,6 +7,7 @@ authors = ["Ivan Kosternoi <ivan.kosternoy@gmail.com>"]
 [tool.poetry.scripts]
 profile_data = "rsschool_mlintro2022q1_capstone_project.data_profiling:profile_data"
 train = "rsschool_mlintro2022q1_capstone_project.train:train"
+train_by_cfg = "rsschool_mlintro2022q1_capstone_project.train:train_by_cfg"
 
 [tool.poetry.dependencies]
 python = "^3.9"
