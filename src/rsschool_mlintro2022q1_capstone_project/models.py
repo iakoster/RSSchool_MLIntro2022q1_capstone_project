@@ -6,6 +6,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, Normalizer
+from sklearn.feature_selection import SelectKBest
 from sklearn.metrics import accuracy_score, f1_score, precision_score
 
 
@@ -25,6 +26,7 @@ def create_pipeline(
         scale: bool = True,
         scaler: str = 'standard',
         normalize: bool = True,
+        k_best: int = 0,
         random_state: int = 42,
         n_jobs: int = None,
         model_kw: dict[str, Any] = None,
@@ -45,6 +47,11 @@ def create_pipeline(
     if normalize:
         pipeline_steps.append((
             'normalizer', Normalizer()
+        ))
+
+    if k_best > 0:
+        pipeline_steps.append((
+            'k_best', SelectKBest(k=k_best)
         ))
 
     if model == 'knn':

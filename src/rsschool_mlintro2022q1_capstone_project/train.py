@@ -114,6 +114,12 @@ def format_kwargs(*params: tuple[str, str, str]
     show_default=True,
 )
 @click.option(
+    "--k-best",
+    default=0,
+    type=click.IntRange(-1, min_open=True),
+    show_default=True,
+)
+@click.option(
     "--save-cfg",
     is_flag=True,
     show_default=True,
@@ -135,6 +141,7 @@ def train(
         scale: bool,
         scaler: str,
         normalize: bool,
+        k_best: int,
         save_cfg: bool,
         cfg_path: Path,
 ):
@@ -149,13 +156,14 @@ def train(
             scale=scale,
             scaler=scaler,
             normalize=normalize,
+            k_best=k_best,
             n_jobs=n_jobs,
             model_kw=model_kw_fmt
         )
     except Exception as exc:
         raise click.BadParameter(
             f'Raised exception while '
-            f'setting pipeline: {repr(exc)}'
+            f'setting pipeline: {exc}'
         )
 
     with mlflow.start_run():
@@ -193,7 +201,8 @@ def train(
         mlflow.log_params({
             'model': model, 'random_state': random_state,
             'k_folds': k_folds, 'use_scaler': scale,
-            'scaler': scaler, 'normalize': normalize
+            'scaler': scaler, 'normalize': normalize,
+            'k_best': k_best
         })
         mlflow.log_param(
             'model_params', 'std' if len(model_kw) == 0 else
@@ -219,7 +228,7 @@ def train(
             dataset_path, save_model_path,
             random_state, k_folds,
             parallel, scale, scaler, normalize,
-            model, model_kw, cfg_path,
+            k_best, model, model_kw, cfg_path,
         )
         click.echo(f'Train parameters saved in {cfg_path}')
 
@@ -242,7 +251,7 @@ def train_by_cfg(ctx: click.Context, cfg_path: Path):
             for opt, val in cfg['general'].items():
                 if opt in ('dataset_path', 'save_model_path'):
                     kwargs[opt] = Path(val)
-                elif opt in ('random_state', 'k_folds'):
+                elif opt in ('random_state', 'k_folds', 'k_best'):
                     kwargs[opt] = int(val)
                 elif opt in ('scale',):
                     kwargs[opt] = bool(val)
@@ -270,6 +279,7 @@ def save_params_to_cfg(
         scale: bool,
         scaler: str,
         normalize: bool,
+        k_best: int,
         model: str,
         model_kw: tuple[str, str, str],
         cfg_path: Path,
@@ -284,6 +294,7 @@ def save_params_to_cfg(
     cfg['general']['scale'] = str(scale)
     cfg['general']['scaler'] = scaler
     cfg['general']['normalize'] = str(normalize)
+    cfg['general']['k_best'] = str(k_best)
     cfg['general']['model'] = model
 
     if len(model_kw) != 0:
