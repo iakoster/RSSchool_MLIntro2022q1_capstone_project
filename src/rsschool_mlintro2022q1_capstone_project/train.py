@@ -79,11 +79,6 @@ def format_kwargs(*params: tuple[str, str, str]
     show_default=True,
 )
 @click.option(
-    "--shuffle-folds",
-    is_flag=True,
-    show_default=True,
-)
-@click.option(
     "--parallel",
     is_flag=True,
     show_default=True,
@@ -114,6 +109,11 @@ def format_kwargs(*params: tuple[str, str, str]
     show_default=True,
 )
 @click.option(
+    "--normalize",
+    is_flag=True,
+    show_default=True,
+)
+@click.option(
     "--save-cfg",
     is_flag=True,
     show_default=True,
@@ -129,45 +129,41 @@ def train(
         save_model_path: Path,
         random_state: int,
         k_folds: int,
-        shuffle_folds: bool,
         parallel: bool,
         model: str,
         model_kw: tuple[str, str, str],
         scale: bool,
         scaler: str,
+        normalize: bool,
         save_cfg: bool,
         cfg_path: Path,
 ):
     features, target = get_dataset_xy(dataset_path)
     n_jobs = -1 if parallel else None
 
+    try:
+        model_kw_fmt = format_kwargs(*model_kw)
+        pipeline = create_pipeline(
+            model=model,
+            random_state=random_state,
+            scale=scale,
+            scaler=scaler,
+            normalize=normalize,
+            n_jobs=n_jobs,
+            model_kw=model_kw_fmt
+        )
+    except Exception as exc:
+        raise click.BadParameter(
+            f'Raised exception while '
+            f'setting pipeline: {repr(exc)}'
+        )
+
     with mlflow.start_run():
-        try:
-            model_kw_fmt = format_kwargs(*model_kw)
-        except Exception as exc:
-            raise click.BadParameter(
-                f'Raised exception while '
-                f'format model kwarg: {repr(exc)}'
-            )
-        try:
-            pipeline = create_pipeline(
-                model=model,
-                random_state=random_state,
-                scale=scale,
-                scaler=scaler,
-                n_jobs=n_jobs,
-                model_kw=model_kw_fmt
-            )
-        except Exception as exc:
-            raise click.BadParameter(
-                f'Raised exception while '
-                f'setting pipeline: {repr(exc)}'
-            )
 
         kf = KFold(
             n_splits=k_folds,
-            shuffle=shuffle_folds,
-            random_state=random_state if shuffle_folds else None
+            shuffle=True,
+            random_state=random_state
         )
 
         accuracy_folds, f1_folds, precision_folds = [], [], []
@@ -176,11 +172,13 @@ def train(
             x_train, x_test = features.iloc[train_index], features.iloc[test_index]
             y_train, y_test = target.iloc[train_index], target.iloc[test_index]
             pipeline.fit(x_train, y_train)
+
             accuracy, f1, precision = get_metrics(
                 y_test, pipeline.predict(x_test))
             accuracy_folds.append(accuracy)
             f1_folds.append(f1)
             precision_folds.append(precision)
+
             if accuracy > accuracy_best:
                 accuracy_best, f1_best, precision_best = \
                     accuracy, f1, precision
@@ -194,8 +192,8 @@ def train(
         mlflow.sklearn.log_model(pipeline, model)
         mlflow.log_params({
             'model': model, 'random_state': random_state,
-            'k_folds': k_folds, 'shuffle_folds': shuffle_folds,
-            'use_scaler': scale, 'scaler': scaler
+            'k_folds': k_folds, 'use_scaler': scale,
+            'scaler': scaler, 'normalize': normalize
         })
         mlflow.log_param(
             'model_params', 'std' if len(model_kw) == 0 else
@@ -219,9 +217,9 @@ def train(
     if save_cfg:
         save_params_to_cfg(
             dataset_path, save_model_path,
-            random_state, k_folds, shuffle_folds,
-            parallel, scale, scaler, model, model_kw,
-            cfg_path,
+            random_state, k_folds,
+            parallel, scale, scaler, normalize,
+            model, model_kw, cfg_path,
         )
         click.echo(f'Train parameters saved in {cfg_path}')
 
@@ -246,7 +244,7 @@ def train_by_cfg(ctx: click.Context, cfg_path: Path):
                     kwargs[opt] = Path(val)
                 elif opt in ('random_state', 'k_folds'):
                     kwargs[opt] = int(val)
-                elif opt in ('shuffle_folds', 'scale'):
+                elif opt in ('scale',):
                     kwargs[opt] = bool(val)
                 else:
                     kwargs[opt] = val
@@ -268,10 +266,10 @@ def save_params_to_cfg(
         save_model_path: Path,
         random_state: int,
         k_folds: int,
-        shuffle_folds: bool,
         parallel: bool,
         scale: bool,
         scaler: str,
+        normalize: bool,
         model: str,
         model_kw: tuple[str, str, str],
         cfg_path: Path,
@@ -282,10 +280,10 @@ def save_params_to_cfg(
     cfg['general']['save_model_path'] = str(save_model_path)
     cfg['general']['random_state'] = str(random_state)
     cfg['general']['k_folds'] = str(k_folds)
-    cfg['general']['shuffle_folds'] = str(shuffle_folds)
     cfg['general']['parallel'] = str(parallel)
     cfg['general']['scale'] = str(scale)
     cfg['general']['scaler'] = scaler
+    cfg['general']['normalize'] = str(normalize)
     cfg['general']['model'] = model
 
     if len(model_kw) != 0:

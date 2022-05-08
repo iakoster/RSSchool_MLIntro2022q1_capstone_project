@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Union, Any
 
 import numpy as np
@@ -6,8 +5,7 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.feature_selection import SelectKBest
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, Normalizer
 from sklearn.metrics import accuracy_score, f1_score, precision_score
 
 
@@ -26,6 +24,7 @@ def create_pipeline(
         model: str = 'knn',
         scale: bool = True,
         scaler: str = 'standard',
+        normalize: bool = True,
         random_state: int = 42,
         n_jobs: int = None,
         model_kw: dict[str, Any] = None,
@@ -41,6 +40,11 @@ def create_pipeline(
     elif scale and scaler == 'minmax':
         pipeline_steps.append((
             'scaler', MinMaxScaler()
+        ))
+
+    if normalize:
+        pipeline_steps.append((
+            'normalizer', Normalizer()
         ))
 
     if model == 'knn':
