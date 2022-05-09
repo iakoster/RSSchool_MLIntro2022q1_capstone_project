@@ -125,6 +125,9 @@ def find_best(
 
         search.fit(features, target)
         best_params: dict = search.best_params_
+        click.echo(
+            f'Best parameters: {search.best_params_}'
+        )
         k_best = best_params.pop('k_best__k')
         model_kw_fmt = {
             k.split('__')[1]: v for k, v in best_params.items()}
