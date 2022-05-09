@@ -12,6 +12,7 @@ import mlflow
 import mlflow.sklearn
 from sklearn.model_selection import KFold
 
+from .dataset import get_dataset_xy
 from .models import create_pipeline, get_metrics
 from .settings import (
     DATASET_PATH_TRAIN,
@@ -21,26 +22,6 @@ from .settings import (
 
 
 warnings.simplefilter("ignore")
-
-
-def get_dataset(
-        dataset_path: Path
-) -> pd.DataFrame:
-    if dataset_path.suffix != '.csv':
-        raise TypeError(
-            'Data profiling does not support '
-            'anything other than .csv data extension')
-    df = pd.read_csv(dataset_path)
-    df.columns = df.columns.str.lower()
-    df.set_index('id', inplace=True)
-    return df
-
-
-def get_dataset_xy(
-        dataset_path: Path
-) -> tuple[pd.DataFrame, pd.Series]:
-    df = get_dataset(dataset_path)
-    return df.drop(columns='cover_type'), df['cover_type']
 
 
 def format_kwargs(*params: tuple[str, str, str]
