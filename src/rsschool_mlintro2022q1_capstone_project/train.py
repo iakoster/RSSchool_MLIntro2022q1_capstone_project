@@ -6,7 +6,6 @@ from typing import Any
 
 import click
 import numpy as np
-import pandas as pd
 
 import mlflow
 import mlflow.sklearn
@@ -17,7 +16,7 @@ from .models import create_pipeline, get_metrics
 from .settings import (
     DATASET_PATH_TRAIN,
     STD_MODEL_PATH,
-    STD_CFG_PATH
+    STD_CFG_PATH,
 )
 
 
