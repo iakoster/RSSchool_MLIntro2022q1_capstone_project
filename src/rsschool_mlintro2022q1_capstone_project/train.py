@@ -174,28 +174,29 @@ def train(
             random_state=random_state
         )
 
-        accuracy_folds, f1_folds, precision_folds = [], [], []
-        accuracy_best, f1_best, precision_best = 0, 0, 0
+        accuracy_folds, f1_folds, roc_auc_folds = [], [], []
+        accuracy_best, f1_best, roc_auc_best = 0, 0, 0
         for train_index, test_index in kf.split(features):
             x_train, x_test = features.iloc[train_index], features.iloc[test_index]
             y_train, y_test = target.iloc[train_index], target.iloc[test_index]
             pipeline.fit(x_train, y_train)
 
-            accuracy, f1, precision = get_metrics(
-                y_test, pipeline.predict(x_test))
+            accuracy, f1, roc_auc_ovr = get_metrics(
+                y_test, pipeline.predict(x_test),
+                pipeline.predict_proba(x_test))
             accuracy_folds.append(accuracy)
             f1_folds.append(f1)
-            precision_folds.append(precision)
+            roc_auc_folds.append(roc_auc_ovr)
 
             if accuracy > accuracy_best:
-                accuracy_best, f1_best, precision_best = \
-                    accuracy, f1, precision
+                accuracy_best, f1_best, roc_auc_best = \
+                    accuracy, f1, roc_auc_ovr
                 dump(pipeline, save_model_path)
 
         mlflow.log_metrics(
             {'accuracy': float(np.mean(accuracy_folds)),
              'f1_score': float(np.mean(f1_folds)),
-             'precision': float(np.mean(precision_folds))}
+             'roc_auc_ovr': float(np.mean(roc_auc_folds))}
         )
         mlflow.sklearn.log_model(pipeline, model)
         mlflow.log_params({
@@ -213,13 +214,13 @@ def train(
             f'Mean metrics. '
             f'Accuracy: {np.mean(accuracy_folds):.6f}, '
             f'F1 score: {np.mean(f1_folds):.6f}, '
-            f'Precision: {np.mean(precision_folds):.6f}'
+            f'ROC AUC OVR: {np.mean(roc_auc_folds):.6f}'
         )
         click.echo(
             f'Best metrics. '
             f'Accuracy: {accuracy_best:.6f}, '
             f'F1 score: {f1_best:.6f}, '
-            f'Precision: {precision_best:.6f}'
+            f'ROC AUC OVR: {roc_auc_best:.6f}'
         )
         click.echo(f'Best model saved in {save_model_path}')
 

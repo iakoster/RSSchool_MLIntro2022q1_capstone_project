@@ -7,17 +7,18 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, Normalizer
 from sklearn.feature_selection import SelectKBest
-from sklearn.metrics import accuracy_score, f1_score, precision_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, roc_auc_score
 
 
 def get_metrics(
         y_true: Union[pd.Series, np.ndarray],
-        y_pred: Union[pd.Series, np.ndarray]
+        y_pred: Union[pd.Series, np.ndarray],
+        y_pred_proba: Union[pd.Series, np.ndarray]
 ) -> tuple[float, float, float]:
     return (
         accuracy_score(y_true, y_pred),
         f1_score(y_true, y_pred, average='macro'),
-        precision_score(y_true, y_pred, average='macro')
+        roc_auc_score(y_true, y_pred_proba, multi_class='ovr')
     )
 
 
