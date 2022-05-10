@@ -155,7 +155,6 @@ def train(
         )
 
         accuracy_folds, f1_folds, roc_auc_folds = [], [], []
-        accuracy_best, f1_best, roc_auc_best = 0, 0, 0
         for train_index, test_index in kf.split(features):
             x_train, x_test = features.iloc[train_index], features.iloc[test_index]
             y_train, y_test = target.iloc[train_index], target.iloc[test_index]
@@ -167,11 +166,6 @@ def train(
             accuracy_folds.append(accuracy)
             f1_folds.append(f1)
             roc_auc_folds.append(roc_auc_ovr)
-
-            if accuracy > accuracy_best:
-                accuracy_best, f1_best, roc_auc_best = \
-                    accuracy, f1, roc_auc_ovr
-                dump(pipeline, save_model_path)
 
         mlflow.log_metrics(
             {'accuracy': float(np.mean(accuracy_folds)),
@@ -196,13 +190,10 @@ def train(
             f'F1 score: {np.mean(f1_folds):.6f}, '
             f'ROC AUC OVR: {np.mean(roc_auc_folds):.6f}'
         )
-        click.echo(
-            f'Best metrics. '
-            f'Accuracy: {accuracy_best:.6f}, '
-            f'F1 score: {f1_best:.6f}, '
-            f'ROC AUC OVR: {roc_auc_best:.6f}'
-        )
-        click.echo(f'Best model saved in {save_model_path}')
+
+        pipeline.fit(features, target)
+        dump(pipeline, save_model_path)
+        click.echo(f'Model saved in {save_model_path}')
 
     if save_cfg:
         save_params_to_cfg(
