@@ -3,9 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
-__pypackages__/
-
 # Environments (just in case)
 venv/
 .venv/
@@ -16,3 +13,4 @@ venv/
 # Package results and sources
 /data/
 /mlruns/
+/.nox/
