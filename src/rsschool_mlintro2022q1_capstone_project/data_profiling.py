@@ -22,9 +22,7 @@ import pandas_profiling
 )
 def profile_data(dataset_path: Path, output_dir: Path):
     if dataset_path.suffix != ".csv":
-        raise TypeError(
-            "Data profiling does not support anything other than .csv data extension"
-        )
+        raise TypeError("Unsupported data extension: %s" % dataset_path.suffix)
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
 

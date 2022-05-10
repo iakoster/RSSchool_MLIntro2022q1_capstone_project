@@ -48,7 +48,9 @@ def create_pipeline(
         pipeline_steps.append(("k_best", SelectKBest(k=k_best)))
 
     if model == "knn":
-        pipeline_steps.append(("knn", KNeighborsClassifier(n_jobs=n_jobs, **model_kw)))
+        pipeline_steps.append(
+            ("knn", KNeighborsClassifier(n_jobs=n_jobs, **model_kw))
+        )
     elif model == "forest":
         pipeline_steps.append(
             (

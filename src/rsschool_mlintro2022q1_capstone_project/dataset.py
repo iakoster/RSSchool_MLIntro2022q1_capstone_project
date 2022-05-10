@@ -5,9 +5,7 @@ import pandas as pd
 
 def get_dataset(dataset_path: Path) -> pd.DataFrame:
     if dataset_path.suffix != ".csv":
-        raise TypeError(
-            "Data profiling does not support anything other than .csv data extension"
-        )
+        raise TypeError("Unsupported data extension: %s" % dataset_path.suffix)
     df = pd.read_csv(dataset_path)
     df.columns = df.columns.str.lower()
     df.set_index("id", inplace=True)

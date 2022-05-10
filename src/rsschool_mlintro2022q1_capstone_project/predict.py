@@ -34,7 +34,9 @@ from .settings import (
     type=click.Path(dir_okay=False, writable=True, path_type=Path),
     show_default=True,
 )
-def predict(dataset_path: Path, model_path: Path, save_prediction_path: Path) -> None:
+def predict(
+    dataset_path: Path, model_path: Path, save_prediction_path: Path
+) -> None:
     features = get_dataset(dataset_path)
     prediction = pd.DataFrame(
         data=load(model_path).predict(features),

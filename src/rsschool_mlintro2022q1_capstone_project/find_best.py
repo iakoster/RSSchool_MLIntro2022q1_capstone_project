@@ -23,7 +23,11 @@ def eval_metrics(est, x, y):
     accuracy, f1_score, roc_auc_ovr = get_metrics(
         y, est.predict(x), est.predict_proba(x)
     )
-    return {"accuracy": accuracy, "f1_score": f1_score, "roc_auc_ovr": roc_auc_ovr}
+    return {
+        "accuracy": accuracy,
+        "f1_score": f1_score,
+        "roc_auc_ovr": roc_auc_ovr,
+    }
 
 
 @click.command()
@@ -100,7 +104,9 @@ def find_best(
             n_jobs=n_jobs,
         )
     except Exception as exc:
-        raise click.BadParameter(f"Raised exception while setting pipeline: {exc}")
+        raise click.BadParameter(
+            f"Raised exception while setting pipeline: {exc}"
+        )
 
     with mlflow.start_run():
         cv_inner = KFold(n_splits=5, shuffle=True, random_state=random_state)
@@ -110,7 +116,12 @@ def find_best(
             pipeline, space, scoring="accuracy", cv=cv_inner, n_jobs=n_jobs
         )
         nested_result = cross_validate(
-            search, features, target, scoring=eval_metrics, cv=cv_outer, n_jobs=n_jobs
+            search,
+            features,
+            target,
+            scoring=eval_metrics,
+            cv=cv_outer,
+            n_jobs=n_jobs,
         )
         accuracy, f1_score, roc_auc_ovr = (
             nested_result["test_accuracy"].mean(),
@@ -138,7 +149,11 @@ def find_best(
         dump(pipeline, save_model_path)
 
         mlflow.log_metrics(
-            {"accuracy": accuracy, "f1_score": f1_score, "roc_auc_ovr": roc_auc_ovr}
+            {
+                "accuracy": accuracy,
+                "f1_score": f1_score,
+                "roc_auc_ovr": roc_auc_ovr,
+            }
         )
         mlflow.sklearn.log_model(pipeline, model)
         mlflow.log_params(
@@ -153,7 +168,8 @@ def find_best(
             }
         )
         mlflow.log_param(
-            "model_params", ", ".join(f"{k}={v}" for k, v in model_kw_fmt.items())
+            "model_params",
+            ", ".join(f"{k}={v}" for k, v in model_kw_fmt.items()),
         )
 
         click.echo(

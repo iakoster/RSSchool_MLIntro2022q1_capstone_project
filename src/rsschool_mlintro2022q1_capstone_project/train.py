@@ -140,7 +140,9 @@ def train(
             model_kw=model_kw_fmt,
         )
     except Exception as exc:
-        raise click.BadParameter(f"Raised exception while setting pipeline: {exc}")
+        raise click.BadParameter(
+            f"Raised exception while setting pipeline: {exc}"
+        )
 
     with mlflow.start_run():
 
@@ -148,12 +150,20 @@ def train(
 
         accuracy_folds, f1_folds, roc_auc_folds = [], [], []
         for train_index, test_index in kf.split(features):
-            x_train, x_test = features.iloc[train_index], features.iloc[test_index]
-            y_train, y_test = target.iloc[train_index], target.iloc[test_index]
+            x_train, x_test = (
+                features.iloc[train_index],
+                features.iloc[test_index],
+            )
+            y_train, y_test = (
+                target.iloc[train_index],
+                target.iloc[test_index],
+            )
             pipeline.fit(x_train, y_train)
 
             accuracy, f1, roc_auc_ovr = get_metrics(
-                y_test, pipeline.predict(x_test), pipeline.predict_proba(x_test)
+                y_test,
+                pipeline.predict(x_test),
+                pipeline.predict_proba(x_test),
             )
             accuracy_folds.append(accuracy)
             f1_folds.append(f1)
@@ -243,9 +253,7 @@ def train_by_cfg(ctx: click.Context, cfg_path: Path):
                 (k, *v.split()) for k, v in cfg["model_kw"].items()
             )
     except Exception as exc:
-        raise click.BadParameter(
-            f"Raised exception while converting values from config: {repr(exc)}"
-        )
+        raise click.BadParameter(f"Bad data in the config: {repr(exc)}")
     ctx.invoke(train, **kwargs)
 
 
