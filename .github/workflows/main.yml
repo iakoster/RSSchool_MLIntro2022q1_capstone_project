@@ -10,9 +10,6 @@ on:
   pull_request:
     branches: [ master ]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -24,6 +21,6 @@ jobs:
     steps:
 
       - name: Run nox
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@master
       - uses: excitedleigh/setup-nox@v2.0.0
-      - run: nox
+      - run: nox -r
