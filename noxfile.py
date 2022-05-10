@@ -37,5 +37,5 @@ def mypy(session: Session):
 @nox.session(python=False)
 def tests(session: Session):
     session.run(
-        "poetry", "run", "test"
+        "poetry", "run", "unittests"
     )

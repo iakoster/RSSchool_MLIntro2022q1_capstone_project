@@ -38,6 +38,23 @@ poetry run mlflow ui
 
 ## Development
 
+The code in this repository must be tested, formatted with black, 
+linted by flake8, and pass mypy typechecking before being commited to the repository.
+
+Install all requirements (including dev requirements) to poetry environment:
+```sh
+poetry install
+```
+Now you can use developer instruments, e.g. flake8:
+```sh
+poetry run flake8
+```
+Format your code with [black](https://github.com/psf/black) using poetry:
+```sh
+poetry run black <dir>
+```
+And so on.
+
 ## Scrips
 
 1. In order to make a report using pandas_profiling you need to execute:
@@ -161,8 +178,21 @@ This command has the following options:
 
 `-s`/`--save-prediction-path` - path to save the prediction (default: data\submission.joblib).
 
+6. For run tests:
+```sh
+poetry run unittests
+```
+
 ## Checks
-1. Screenshot from `mlflow iu` with three different sets of hyperparameters, two different feature engineering techniques, and two different ML models.
+1. Screenshot from `mlflow iu` with three different sets of hyperparameters, 
+two different feature engineering techniques, and two different ML models.
+
 ![MLFlow runs](materials/mlflow_runs.png)
+
 2. Screenshot from `mlflow iu` with result by `find_best` command.
+
 ![MLFlow runs](materials/mlflow_runs_find_best.png)
+
+3. Screenshot with the passed tests by nox.
+
+![MLFlow runs](materials/nox_checks.png)
