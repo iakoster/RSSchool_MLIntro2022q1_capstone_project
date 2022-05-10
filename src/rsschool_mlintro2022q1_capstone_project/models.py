@@ -16,6 +16,7 @@ def get_metrics(
     y_pred: Union[pd.Series, npt.NDArray[np.int_]],
     y_pred_proba: Union[pd.Series, npt.NDArray[np.int_]],
 ) -> tuple[float, float, float]:
+    """Calculate metrics."""
     return (
         accuracy_score(y_true, y_pred),
         f1_score(y_true, y_pred, average="macro"),
@@ -33,6 +34,7 @@ def create_pipeline(
     n_jobs: Optional[int] = None,
     model_kw: Optional[dict[str, Any]] = None,
 ) -> Pipeline:
+    """Create pipeline."""
     if model_kw is None:
         model_kw = {}
     pipeline_steps = []

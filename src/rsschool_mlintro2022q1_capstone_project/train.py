@@ -24,6 +24,7 @@ warnings.simplefilter("ignore")
 
 
 def format_kwargs(*params: tuple[str, str, str]) -> dict[str, Any]:
+    """Transform parameters to keyword arguments format."""
     params_kw = {}
     for name, type_, value in params:
         params_kw[name.replace("-", "_")] = eval(type_)(value)
@@ -124,6 +125,7 @@ def train(
     save_cfg: bool,
     cfg_path: Path,
 ) -> None:
+    """Train the model."""
     features, target = get_dataset_xy(dataset_path)
     n_jobs = -1 if parallel else None
 
@@ -234,6 +236,7 @@ def train(
 )
 @click.pass_context
 def train_by_cfg(ctx: click.Context, cfg_path: Path) -> None:
+    """Train the model with parameters from the config file."""
     cfg = configparser.ConfigParser()
     cfg.read(cfg_path)
     kwargs: dict[str, Union[Path, int, str, tuple[tuple[str, ...], ...]]] = {}
@@ -271,6 +274,7 @@ def save_params_to_cfg(
     model_kw: tuple[tuple[str, str, str], ...],
     cfg_path: Path,
 ) -> None:
+    """Save train parameters to the config file."""
     cfg = configparser.ConfigParser()
     cfg.add_section("general")
     cfg["general"]["dataset_path"] = str(dataset_path)

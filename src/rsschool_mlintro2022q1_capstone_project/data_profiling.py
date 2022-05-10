@@ -21,6 +21,7 @@ import pandas_profiling
     show_default=True,
 )
 def profile_data(dataset_path: Path, output_dir: Path) -> None:
+    """Create the profile of the data"""
     if dataset_path.suffix != ".csv":
         raise TypeError("Unsupported data extension: %s" % dataset_path.suffix)
     if not output_dir.exists():

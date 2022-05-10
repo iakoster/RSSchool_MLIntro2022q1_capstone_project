@@ -37,6 +37,7 @@ from .settings import (
 def predict(
     dataset_path: Path, model_path: Path, save_prediction_path: Path
 ) -> None:
+    """Create prediction on the data."""
     features = get_dataset(dataset_path)
     prediction = pd.DataFrame(
         data=load(model_path).predict(features),

@@ -27,6 +27,7 @@ warnings.simplefilter("ignore", append=True)
 def eval_metrics(
     est: Pipeline, x: pd.DataFrame, y: Union[pd.Series, npt.NDArray[np.int_]]
 ) -> dict[str, float]:
+    """Make a prediction and calculate metrics."""
     accuracy, f1_score, roc_auc_ovr = get_metrics(
         y, est.predict(x), est.predict_proba(x)
     )
@@ -97,6 +98,7 @@ def find_best(
     normalize: bool,
     n_jobs: int,
 ) -> None:
+    """Search the best hyperparameters for the model."""
     features, target = get_dataset_xy(dataset_path)
     space = get_space(model)
 
@@ -191,6 +193,7 @@ def find_best(
 def get_space(
     model: str,
 ) -> Mapping[str, Union[list[int], list[str]]]:
+    """Get space of the hyperparameters for search."""
     assert model in ("knn", "forest"), "invalid model %s" % model
 
     space: dict[str, Union[list[int], list[str]]]
