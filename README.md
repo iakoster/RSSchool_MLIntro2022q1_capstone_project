@@ -12,11 +12,11 @@ The project only needs the `train.csv` and `test.csv`(for prediction only) table
 3. Make sure Python 3.9 (I use [Python 3.9.12](https://www.python.org/downloads/release/python-3912/)) 
 and [Poetry](https://python-poetry.org/docs/) are installed on your machine (I use Poetry 1.1.13).
 4. Install the project dependencies (*run this and following commands in a terminal, 
-5. from the root of a cloned repository*):
+from the root of a cloned repository*):
 ```sh
 poetry install --no-dev
 ```
-6. Run train with the following command:
+5. Run train with the following command:
 ```sh
 poetry run train
 ```
@@ -31,7 +31,7 @@ poetry run train --help
 ```
 For more information, see the **scripts** section.
 
-7. Run MLflow UI to see the information about experiments you conducted:
+6. Run MLflow UI to see the information about experiments you conducted:
 ```sh
 poetry run mlflow ui
 ```
