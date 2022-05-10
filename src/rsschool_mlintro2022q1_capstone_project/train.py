@@ -2,7 +2,7 @@ import configparser
 import warnings
 from pathlib import Path
 from joblib import dump
-from typing import Any
+from typing import Any, Union
 
 import click
 import numpy as np
@@ -116,14 +116,14 @@ def train(
     k_folds: int,
     parallel: bool,
     model: str,
-    model_kw: tuple[str, str, str],
+    model_kw: tuple[tuple[str, str, str], ...],
     scale: bool,
     scaler: str,
     normalize: bool,
     k_best: int,
     save_cfg: bool,
     cfg_path: Path,
-):
+) -> None:
     features, target = get_dataset_xy(dataset_path)
     n_jobs = -1 if parallel else None
 
@@ -233,10 +233,10 @@ def train(
     show_default=True,
 )
 @click.pass_context
-def train_by_cfg(ctx: click.Context, cfg_path: Path):
+def train_by_cfg(ctx: click.Context, cfg_path: Path) -> None:
     cfg = configparser.ConfigParser()
     cfg.read(cfg_path)
-    kwargs = {}
+    kwargs: dict[str, Union[Path, int, str, tuple[tuple[str, ...], ...]]] = {}
     try:
         if "general" in cfg:
             for opt, val in cfg["general"].items():
@@ -268,9 +268,9 @@ def save_params_to_cfg(
     normalize: bool,
     k_best: int,
     model: str,
-    model_kw: tuple[str, str, str],
+    model_kw: tuple[tuple[str, str, str], ...],
     cfg_path: Path,
-):
+) -> None:
     cfg = configparser.ConfigParser()
     cfg.add_section("general")
     cfg["general"]["dataset_path"] = str(dataset_path)

@@ -1,6 +1,7 @@
-from typing import Union, Any
+from typing import Union, Any, Optional
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
@@ -11,9 +12,9 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 
 def get_metrics(
-    y_true: Union[pd.Series, np.ndarray],
-    y_pred: Union[pd.Series, np.ndarray],
-    y_pred_proba: Union[pd.Series, np.ndarray],
+    y_true: Union[pd.Series, npt.NDArray[np.int_]],
+    y_pred: Union[pd.Series, npt.NDArray[np.int_]],
+    y_pred_proba: Union[pd.Series, npt.NDArray[np.int_]],
 ) -> tuple[float, float, float]:
     return (
         accuracy_score(y_true, y_pred),
@@ -29,8 +30,8 @@ def create_pipeline(
     normalize: bool = True,
     k_best: int = 0,
     random_state: int = 42,
-    n_jobs: int = None,
-    model_kw: dict[str, Any] = None,
+    n_jobs: Optional[int] = None,
+    model_kw: Optional[dict[str, Any]] = None,
 ) -> Pipeline:
     if model_kw is None:
         model_kw = {}

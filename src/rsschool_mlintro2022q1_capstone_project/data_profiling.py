@@ -20,7 +20,7 @@ import pandas_profiling
     type=click.Path(file_okay=False, writable=True, path_type=Path),
     show_default=True,
 )
-def profile_data(dataset_path: Path, output_dir: Path):
+def profile_data(dataset_path: Path, output_dir: Path) -> None:
     if dataset_path.suffix != ".csv":
         raise TypeError("Unsupported data extension: %s" % dataset_path.suffix)
     if not output_dir.exists():

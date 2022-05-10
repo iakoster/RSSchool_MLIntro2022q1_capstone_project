@@ -4,7 +4,7 @@ import nox
 from nox.sessions import Session
 
 
-nox.options.sessions = "black", "flake8"
+nox.options.sessions = "black", "flake8", "mypy"
 
 
 @nox.session(python=False)
@@ -22,4 +22,13 @@ def flake8(session: Session):
     session.run(
         "poetry", "run", "flake8",
         "src/rsschool_mlintro2022q1_capstone_project"
+    )
+
+
+@nox.session(python=False)
+def mypy(session: Session):
+    session.run(
+        "poetry", "run", "mypy",
+        "src/rsschool_mlintro2022q1_capstone_project",
+        "--config-file=mypy.ini"
     )

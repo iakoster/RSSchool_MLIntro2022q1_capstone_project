@@ -1,11 +1,16 @@
 import warnings
 from pathlib import Path
 from joblib import dump
+from typing import Union, Mapping
 
 import click
+import numpy as np
+import numpy.typing as npt
+import pandas as pd
 
 import mlflow
 import mlflow.sklearn
+from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold, GridSearchCV, cross_validate
 
 from .dataset import get_dataset_xy
@@ -19,7 +24,9 @@ from .settings import (
 warnings.simplefilter("ignore", append=True)
 
 
-def eval_metrics(est, x, y):
+def eval_metrics(
+    est: Pipeline, x: pd.DataFrame, y: Union[pd.Series, npt.NDArray[np.int_]]
+) -> dict[str, float]:
     accuracy, f1_score, roc_auc_ovr = get_metrics(
         y, est.predict(x), est.predict_proba(x)
     )
@@ -89,7 +96,7 @@ def find_best(
     scaler: str,
     normalize: bool,
     n_jobs: int,
-):
+) -> None:
     features, target = get_dataset_xy(dataset_path)
     space = get_space(model)
 
@@ -130,7 +137,7 @@ def find_best(
         )
 
         search.fit(features, target)
-        best_params: dict = search.best_params_
+        best_params = search.best_params_
         click.echo(f"Best parameters: {search.best_params_}")
         k_best = best_params.pop("k_best__k")
         model_kw_fmt = {k.split("__")[1]: v for k, v in best_params.items()}
@@ -181,9 +188,12 @@ def find_best(
         click.echo(f"Model saved in {save_model_path}")
 
 
-def get_space(model: str) -> dict:
+def get_space(
+    model: str,
+) -> Mapping[str, Union[list[int], list[str]]]:
     assert model in ("knn", "forest"), "invalid model %s" % model
 
+    space: dict[str, Union[list[int], list[str]]]
     space = {"k_best__k": [5, 10, 15, 20, 25, 30, 40, 50, 54]}
     if model == "knn":
         space.update(
@@ -197,7 +207,7 @@ def get_space(model: str) -> dict:
             {
                 f"{model}__n_estimators": [10, 20, 40, 70, 100],
                 f"{model}__criterion": ["gini", "entropy"],
-                f"{model}__max_depth": [None, 5, 10, 20, 35, 50, 75, 100],
+                f"{model}__max_depth": [5, 10, 20, 35, 50, 75, 100],
             }
         )
 
