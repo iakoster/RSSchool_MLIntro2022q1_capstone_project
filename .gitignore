@@ -14,3 +14,4 @@ venv/
 /data/
 /mlruns/
 /.nox/
+/.mypy_cache/
