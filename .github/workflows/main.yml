@@ -13,14 +13,17 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  test:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-
-      - name: Run nox
       - uses: actions/checkout@master
-      - uses: excitedleigh/setup-nox@v2.0.0
-      - run: nox -r
+      
+      - name: setup env
+      - run: pip install poetry
+      - run: poetry install
+      
+      - name: Run nox
+      - run: poetry run nox -r
