@@ -23,11 +23,10 @@ from .settings import (
 warnings.simplefilter("ignore")
 
 
-def format_kwargs(*params: tuple[str, str, str]
-                  ) -> dict[str, Any]:
+def format_kwargs(*params: tuple[str, str, str]) -> dict[str, Any]:
     params_kw = {}
     for name, type_, value in params:
-        params_kw[name.replace('-', '_')] = eval(type_)(value)
+        params_kw[name.replace("-", "_")] = eval(type_)(value)
     return params_kw
 
 
@@ -67,7 +66,7 @@ def format_kwargs(*params: tuple[str, str, str]
     "-m",
     "--model",
     default="knn",
-    type=click.Choice(['knn', 'forest'], case_sensitive=False),
+    type=click.Choice(["knn", "forest"], case_sensitive=False),
     show_default=True,
 )
 @click.option(
@@ -85,7 +84,7 @@ def format_kwargs(*params: tuple[str, str, str]
 @click.option(
     "--scaler",
     default="standard",
-    type=click.Choice(['standard', 'minmax'], case_sensitive=False),
+    type=click.Choice(["standard", "minmax"], case_sensitive=False),
     show_default=True,
 )
 @click.option(
@@ -111,19 +110,19 @@ def format_kwargs(*params: tuple[str, str, str]
     show_default=True,
 )
 def train(
-        dataset_path: Path,
-        save_model_path: Path,
-        random_state: int,
-        k_folds: int,
-        parallel: bool,
-        model: str,
-        model_kw: tuple[str, str, str],
-        scale: bool,
-        scaler: str,
-        normalize: bool,
-        k_best: int,
-        save_cfg: bool,
-        cfg_path: Path,
+    dataset_path: Path,
+    save_model_path: Path,
+    random_state: int,
+    k_folds: int,
+    parallel: bool,
+    model: str,
+    model_kw: tuple[str, str, str],
+    scale: bool,
+    scaler: str,
+    normalize: bool,
+    k_best: int,
+    save_cfg: bool,
+    cfg_path: Path,
 ):
     features, target = get_dataset_xy(dataset_path)
     n_jobs = -1 if parallel else None
@@ -138,21 +137,14 @@ def train(
             normalize=normalize,
             k_best=k_best,
             n_jobs=n_jobs,
-            model_kw=model_kw_fmt
+            model_kw=model_kw_fmt,
         )
     except Exception as exc:
-        raise click.BadParameter(
-            f'Raised exception while '
-            f'setting pipeline: {exc}'
-        )
+        raise click.BadParameter(f"Raised exception while setting pipeline: {exc}")
 
     with mlflow.start_run():
 
-        kf = KFold(
-            n_splits=k_folds,
-            shuffle=True,
-            random_state=random_state
-        )
+        kf = KFold(n_splits=k_folds, shuffle=True, random_state=random_state)
 
         accuracy_folds, f1_folds, roc_auc_folds = [], [], []
         for train_index, test_index in kf.split(features):
@@ -161,48 +153,65 @@ def train(
             pipeline.fit(x_train, y_train)
 
             accuracy, f1, roc_auc_ovr = get_metrics(
-                y_test, pipeline.predict(x_test),
-                pipeline.predict_proba(x_test))
+                y_test, pipeline.predict(x_test), pipeline.predict_proba(x_test)
+            )
             accuracy_folds.append(accuracy)
             f1_folds.append(f1)
             roc_auc_folds.append(roc_auc_ovr)
 
         mlflow.log_metrics(
-            {'accuracy': float(np.mean(accuracy_folds)),
-             'f1_score': float(np.mean(f1_folds)),
-             'roc_auc_ovr': float(np.mean(roc_auc_folds))}
+            {
+                "accuracy": float(np.mean(accuracy_folds)),
+                "f1_score": float(np.mean(f1_folds)),
+                "roc_auc_ovr": float(np.mean(roc_auc_folds)),
+            }
         )
         mlflow.sklearn.log_model(pipeline, model)
-        mlflow.log_params({
-            'model': model, 'random_state': random_state,
-            'k_folds': k_folds, 'use_scaler': scale,
-            'scaler': scaler, 'normalize': normalize,
-            'k_best': k_best
-        })
+        mlflow.log_params(
+            {
+                "model": model,
+                "random_state": random_state,
+                "k_folds": k_folds,
+                "use_scaler": scale,
+                "scaler": scaler,
+                "normalize": normalize,
+                "k_best": k_best,
+            }
+        )
         mlflow.log_param(
-            'model_params', 'std' if len(model_kw) == 0 else
-            ', '.join(f'{k}={v}' for k, v in model_kw_fmt.items())
+            "model_params",
+            "std"
+            if len(model_kw) == 0
+            else ", ".join(f"{k}={v}" for k, v in model_kw_fmt.items()),
         )
 
         click.echo(
-            f'Mean metrics. '
-            f'Accuracy: {np.mean(accuracy_folds):.6f}, '
-            f'F1 score: {np.mean(f1_folds):.6f}, '
-            f'ROC AUC OVR: {np.mean(roc_auc_folds):.6f}'
+            f"Mean metrics. "
+            f"Accuracy: {np.mean(accuracy_folds):.6f}, "
+            f"F1 score: {np.mean(f1_folds):.6f}, "
+            f"ROC AUC OVR: {np.mean(roc_auc_folds):.6f}"
         )
 
         pipeline.fit(features, target)
         dump(pipeline, save_model_path)
-        click.echo(f'Model saved in {save_model_path}')
+        click.echo(f"Model saved in {save_model_path}")
 
     if save_cfg:
         save_params_to_cfg(
-            dataset_path, save_model_path,
-            random_state, k_folds,
-            parallel, scale, scaler, normalize,
-            k_best, model, model_kw, cfg_path,
+            dataset_path,
+            save_model_path,
+            random_state,
+            k_folds,
+            parallel,
+            scale,
+            scaler,
+            normalize,
+            k_best,
+            model,
+            model_kw,
+            cfg_path,
         )
-        click.echo(f'Train parameters saved in {cfg_path}')
+        click.echo(f"Train parameters saved in {cfg_path}")
 
 
 @click.command()
@@ -219,60 +228,58 @@ def train_by_cfg(ctx: click.Context, cfg_path: Path):
     cfg.read(cfg_path)
     kwargs = {}
     try:
-        if 'general' in cfg:
-            for opt, val in cfg['general'].items():
-                if opt in ('dataset_path', 'save_model_path'):
+        if "general" in cfg:
+            for opt, val in cfg["general"].items():
+                if opt in ("dataset_path", "save_model_path"):
                     kwargs[opt] = Path(val)
-                elif opt in ('random_state', 'k_folds', 'k_best'):
+                elif opt in ("random_state", "k_folds", "k_best"):
                     kwargs[opt] = int(val)
-                elif opt in ('scale', 'normalize', 'parallel'):
+                elif opt in ("scale", "normalize", "parallel"):
                     kwargs[opt] = eval(val)
                 else:
                     kwargs[opt] = val
-        if 'model_kw' in cfg:
-            kwargs['model_kw'] = tuple(
-                (k, *v.split()) for k, v in
-                cfg['model_kw'].items()
+        if "model_kw" in cfg:
+            kwargs["model_kw"] = tuple(
+                (k, *v.split()) for k, v in cfg["model_kw"].items()
             )
     except Exception as exc:
         raise click.BadParameter(
-            f'Raised exception while converting '
-            f'values from config: {repr(exc)}'
+            f"Raised exception while converting values from config: {repr(exc)}"
         )
     ctx.invoke(train, **kwargs)
 
 
 def save_params_to_cfg(
-        dataset_path: Path,
-        save_model_path: Path,
-        random_state: int,
-        k_folds: int,
-        parallel: bool,
-        scale: bool,
-        scaler: str,
-        normalize: bool,
-        k_best: int,
-        model: str,
-        model_kw: tuple[str, str, str],
-        cfg_path: Path,
+    dataset_path: Path,
+    save_model_path: Path,
+    random_state: int,
+    k_folds: int,
+    parallel: bool,
+    scale: bool,
+    scaler: str,
+    normalize: bool,
+    k_best: int,
+    model: str,
+    model_kw: tuple[str, str, str],
+    cfg_path: Path,
 ):
     cfg = configparser.ConfigParser()
-    cfg.add_section('general')
-    cfg['general']['dataset_path'] = str(dataset_path)
-    cfg['general']['save_model_path'] = str(save_model_path)
-    cfg['general']['random_state'] = str(random_state)
-    cfg['general']['k_folds'] = str(k_folds)
-    cfg['general']['parallel'] = str(parallel)
-    cfg['general']['scale'] = str(scale)
-    cfg['general']['scaler'] = scaler
-    cfg['general']['normalize'] = str(normalize)
-    cfg['general']['k_best'] = str(k_best)
-    cfg['general']['model'] = model
+    cfg.add_section("general")
+    cfg["general"]["dataset_path"] = str(dataset_path)
+    cfg["general"]["save_model_path"] = str(save_model_path)
+    cfg["general"]["random_state"] = str(random_state)
+    cfg["general"]["k_folds"] = str(k_folds)
+    cfg["general"]["parallel"] = str(parallel)
+    cfg["general"]["scale"] = str(scale)
+    cfg["general"]["scaler"] = scaler
+    cfg["general"]["normalize"] = str(normalize)
+    cfg["general"]["k_best"] = str(k_best)
+    cfg["general"]["model"] = model
 
     if len(model_kw) != 0:
-        cfg.add_section('model_kw')
+        cfg.add_section("model_kw")
         for name, type_, val in model_kw:
-            cfg['model_kw'][name] = f'{type_} {val}'
+            cfg["model_kw"][name] = f"{type_} {val}"
 
-    with open(cfg_path, 'w') as file:
+    with open(cfg_path, "w") as file:
         cfg.write(file)

@@ -20,6 +20,7 @@ sklearn = "^0.0"
 mlflow = "^1.25.1"
 
 [tool.poetry.dev-dependencies]
+black = "^22.3.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
