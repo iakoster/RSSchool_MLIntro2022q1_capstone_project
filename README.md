@@ -47,7 +47,7 @@ poetry run profile_data
 The command creates a data profile in the specified directory in the format 
 'profile_{name}_{suffix}.html'. This command has the following options:
 
-`-d`/`--dataset-path` - path to dataset (default: data/train.csv).
+`-d`/`--dataset-path` - path to dataset (default: data\train.csv).
 
 `-o`/`--output_dir` - path to save profile in output directory (default: data/profiles).
 If directory not exists - directory will be created.
@@ -58,7 +58,7 @@ poetry run train
 ```
 This command has the following options:
 
-`-d`/`--dataset-path` - path to dataset (default: data/train.csv).
+`-d`/`--dataset-path` - path to dataset (default: data\train.csv).
 
 `-s`/`--save-model-path` - path to save the model (default: data\model.joblib).
 
@@ -131,7 +131,7 @@ poetry run find_best
 ```
 This command has the following options:
 
-`-d`/`--dataset-path` - path to dataset (default: data/train.csv).
+`-d`/`--dataset-path` - path to dataset (default: data\train.csv).
 
 `-s`/`--save-model-path` - path to save the model (default: data\best_model.joblib).
 
@@ -148,6 +148,18 @@ This command has the following options:
 `--normalize` - it's a flag. If specified add `Normalizer` to the pipeline.
 
 `--n-jobs` - the number of processes to run the script in parallel.
+
+5. For make a prediction:
+```sh
+poetry run predict
+```
+This command has the following options:
+
+`-d`/`--dataset-path` - path to dataset (default: data\test.csv).
+
+`-s`/`--model-path` - path to a dump of the model (default: data\best_model.joblib).
+
+`-s`/`--save-prediction-path` - path to save the prediction (default: data\submission.joblib).
 
 ## Checks
 1. Screenshot from `mlflow iu` with three different sets of hyperparameters, two different feature engineering techniques, and two different ML models.
