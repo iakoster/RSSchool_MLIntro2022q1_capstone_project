@@ -196,3 +196,7 @@ two different feature engineering techniques, and two different ML models.
 3. Screenshot with the passed tests by nox.
 
 ![MLFlow runs](materials/nox_checks.png)
+
+4. Screenshot with result from kaggle. Еhe result is obtained with `train -m forest --model-kw criterion str entropy`
+
+![MLFlow runs](materials/kaggle.png)
