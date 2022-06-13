@@ -1,29 +1,27 @@
-# This is a basic workflow to help you get started with Actions
+name: test
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+permissions:
+  contents: read
+
 jobs:
-  # This workflow contains a single job called "build"
-  test:
-    # The type of runner that the job will run on
-    runs-on: windows-latest
+  build:
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@master
-      
-      - name: setup env
-      - run: pip install poetry
-      - run: poetry install
-      
-      - name: Run nox
-      - run: poetry run nox -r
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.9"
+    - name: Install dependencies
+      run: |
+        pip install poetry
+        poetry install
+    - name: nox
+      run: |
+        poetry run nox
